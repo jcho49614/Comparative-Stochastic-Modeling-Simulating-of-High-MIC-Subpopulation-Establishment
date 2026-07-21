@@ -1,0 +1,13 @@
+Species: Pseudomonas aeruginosa
+Antibiotic: Ciprofloxacin
+Database: EUCAST MIC and Zone Diameter Distributions
+Method: MIC
+Reference database date: 2026-07-07
+Data retrieval date: 2026-07-07
+Reported observations: 26996
+Displayed MIC-bin count total: 26990
+Number of distributions: 52
+ECOFF: 0.5 mg/L
+ECOFF confidence interval: 0.5–1 mg/L
+Data-processing rule:
+For model initialization, MIC-bin frequencies were normalized using the sum of displayed MIC-bin counts (n = 26990), rather than the reported observation count, because the two values differed by 6 observations.

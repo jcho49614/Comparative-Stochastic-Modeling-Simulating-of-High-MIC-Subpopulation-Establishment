@@ -1,0 +1,20 @@
+species,antibiotic,mic_mg_l,isolate_count,frequency,ecoff_mg_l,mic_group
+Escherichia coli,Ciprofloxacin,0.002,14,0.000885,0.06,low
+Escherichia coli,Ciprofloxacin,0.004,189,0.011952,0.06,low
+Escherichia coli,Ciprofloxacin,0.008,3952,0.249858,0.06,low
+Escherichia coli,Ciprofloxacin,0.016,7238,0.457724,0.06,low
+Escherichia coli,Ciprofloxacin,0.03,1355,0.085688,0.06,low
+Escherichia coli,Ciprofloxacin,0.06,356,0.022514,0.06,low
+Escherichia coli,Ciprofloxacin,0.125,401,0.025358,0.06,high
+Escherichia coli,Ciprofloxacin,0.25,521,0.032948,0.06,high
+Escherichia coli,Ciprofloxacin,0.5,171,0.010814,0.06,high
+Escherichia coli,Ciprofloxacin,1,94,0.005944,0.06,high
+Escherichia coli,Ciprofloxacin,2,47,0.002972,0.06,high
+Escherichia coli,Ciprofloxacin,4,119,0.007525,0.06,high
+Escherichia coli,Ciprofloxacin,8,246,0.015557,0.06,high
+Escherichia coli,Ciprofloxacin,16,229,0.014482,0.06,high
+Escherichia coli,Ciprofloxacin,32,564,0.035667,0.06,high
+Escherichia coli,Ciprofloxacin,64,166,0.010498,0.06,high
+Escherichia coli,Ciprofloxacin,128,85,0.005375,0.06,high
+Escherichia coli,Ciprofloxacin,256,59,0.003731,0.06,high
+Escherichia coli,Ciprofloxacin,512,7,0.000443,0.06,high

@@ -1,0 +1,13 @@
+Species: Escherichia coli
+Antibiotic: Ciprofloxacin
+Database: EUCAST MIC and Zone Diameter Distributions
+Method: MIC
+Reference database date: 2026-07-07
+Data retrieval date: 2026-07-07
+Reported observations: 15667
+Displayed MIC-bin count total: 15813
+Number of distributions: 53
+ECOFF: 0.06 mg/L
+ECOFF confidence interval: 0.03–0.06 mg/L
+Data-processing rule:
+For model initialization, MIC-bin frequencies were normalized using the sum of displayed MIC-bin counts (n = 15813), rather than the reported observation count, because the two values differed by 146 observations.

@@ -1,0 +1,13 @@
+Species: Klebsiella pneumoniae
+Antibiotic: Ciprofloxacin
+Database: EUCAST MIC and Zone Diameter Distributions
+Method: MIC
+Reference database date: 2026-07-07
+Data retrieval date: 2026-07-07
+Reported observations: 3788
+Displayed MIC-bin count total: 3788
+Number of distributions: 40
+ECOFF: 0.125 mg/L
+ECOFF confidence interval: 0.06–0.25 mg/L
+Data-processing rule:
+For model initialization, MIC-bin frequencies were normalized using the sum of displayed MIC-bin counts (n = 3788). The reported observation count and displayed totals match exactly, ensuring numerical consistency across all parsed bins.

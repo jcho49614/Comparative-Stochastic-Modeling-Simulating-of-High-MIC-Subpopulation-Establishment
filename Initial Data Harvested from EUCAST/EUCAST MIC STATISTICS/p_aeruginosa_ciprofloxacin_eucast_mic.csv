@@ -1,0 +1,20 @@
+species,antibiotic,mic_mg_l,isolate_count,frequency,ecoff_mg_l,mic_group
+Pseudomonas aeruginosa,Ciprofloxacin,0.002,0,0.0,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.004,0,0.0,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.008,9,0.000333,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.016,27,0.001,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.03,491,0.018188,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.06,2946,0.109127,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.125,9217,0.341421,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.25,4391,0.162654,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,0.5,3089,0.114424,0.5,low
+Pseudomonas aeruginosa,Ciprofloxacin,1,1757,0.065084,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,2,1451,0.053749,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,4,825,0.03056,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,8,895,0.033153,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,16,485,0.017966,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,32,473,0.017521,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,64,675,0.025004,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,128,133,0.004927,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,256,21,0.000778,0.5,high
+Pseudomonas aeruginosa,Ciprofloxacin,512,105,0.003889,0.5,high

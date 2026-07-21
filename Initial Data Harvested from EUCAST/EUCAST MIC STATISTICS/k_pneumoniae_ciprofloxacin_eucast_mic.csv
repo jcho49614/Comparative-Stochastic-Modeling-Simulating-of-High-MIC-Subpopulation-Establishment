@@ -1,0 +1,20 @@
+species,antibiotic,mic_mg_l,isolate_count,frequency,ecoff_mg_l,mic_group
+Klebsiella pneumoniae,Ciprofloxacin,0.002,0,0.0,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.004,4,0.001067,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.008,116,0.03095,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.016,545,0.145411,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.03,1456,0.388474,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.06,692,0.184632,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.125,196,0.052295,0.125,low
+Klebsiella pneumoniae,Ciprofloxacin,0.25,189,0.050427,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,0.5,119,0.03175,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,1.0,88,0.023479,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,2.0,36,0.009605,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,4.0,43,0.011473,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,8.0,26,0.006937,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,16.0,36,0.009605,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,32.0,105,0.028015,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,64.0,53,0.014141,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,128.0,31,0.008271,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,256.0,28,0.007471,0.125,high
+Klebsiella pneumoniae,Ciprofloxacin,512.0,15,0.004002,0.125,high
