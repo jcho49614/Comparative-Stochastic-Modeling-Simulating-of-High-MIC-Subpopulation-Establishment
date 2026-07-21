@@ -1,53 +1,22 @@
-#!/usr/bin/env python3
+
 """
-01_quality_check.py
-
-Quality-control script for EUCAST ciprofloxacin MIC-distribution CSV files.
-
-Expected input filenames:
-    *_ciprofloxacin_eucast_mic.csv
-
-Optional matching metadata filenames:
-    *_ciprofloxacin_eucast_metadata.txt
-
-The script checks:
-1. MIC-bin count total vs. EUCAST-reported observations
-2. Number of MIC categories
-3. Whether ECOFF is present as an exact MIC bin
-4. Missing, non-positive, or negative values
-5. Whether normalized frequencies sum to 1
-
-Outputs are written to:
-    quality_check_output/
+file is dedicated towards a quality check of created information
+matching data with suffix *_ciprofloxacin_eucast_mic.csv will be analyzed and printed
+outputs are written to directory quality_check_output
 """
 
 from pathlib import Path
 import re
-
 import numpy as np
 import pandas as pd
 
-
-# ============================================================
-# 1. File locations
-# ============================================================
-
-# Set this to the folder containing your MIC CSV files.
-# "." means the same folder as this script.
+#path formatting
 DATA_DIR = Path(".")
-
-# Folder for generated output files.
-OUTPUT_DIR = DATA_DIR / "quality_check_output"
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-
-# ============================================================
-# 2. Read metadata
-# ============================================================
+OUTPUT_DIR = DATA_DIR / "quality_check_output"  #output
+OUTPUT_DIR.mkdir(exist_ok=True)    #create if missing
 
 def read_metadata(metadata_path: Path) -> dict:
-    """Read key values from a matching EUCAST metadata TXT file."""
-
+    #read data from metadata from directory
     result = {
         "reported_observations": None,
         "metadata_ecoff": None,
@@ -55,7 +24,7 @@ def read_metadata(metadata_path: Path) -> dict:
     }
 
     if not metadata_path.exists():
-        print(f"  [Warning] Metadata file not found: {metadata_path.name}")
+        print(f" Metadata file not found: {metadata_path.name}")
         return result
 
     text = metadata_path.read_text(encoding="utf-8")
@@ -79,23 +48,7 @@ def read_metadata(metadata_path: Path) -> dict:
 
     return result
 
-
-# ============================================================
-# 3. Check one MIC CSV file
-# ============================================================
-
-def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
-    """
-    Read and check one EUCAST MIC CSV.
-
-    Required columns:
-        species
-        antibiotic
-        mic_mg_l
-        isolate_count
-        ecoff_mg_l
-    """
-
+def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:    #check one csv file.
     print("\n" + "=" * 72)
     print(f"Checking: {csv_path.name}")
     print("=" * 72)
@@ -117,30 +70,24 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
             f"{sorted(missing_columns)}"
         )
 
-    # Convert numeric columns safely.
+    #pandas conversion
     df["mic_mg_l"] = pd.to_numeric(df["mic_mg_l"], errors="coerce")
     df["isolate_count"] = pd.to_numeric(df["isolate_count"], errors="coerce")
     df["ecoff_mg_l"] = pd.to_numeric(df["ecoff_mg_l"], errors="coerce")
 
-    # Locate matching metadata file.
+    #find metadata files
     metadata_name = csv_path.name.replace("_mic.csv", "_metadata.txt")
     metadata_path = csv_path.parent / metadata_name
     metadata = read_metadata(metadata_path)
 
-    # A. Missing values
+    # errorcases
     missing_mic = int(df["mic_mg_l"].isna().sum())
     missing_count = int(df["isolate_count"].isna().sum())
     missing_ecoff = int(df["ecoff_mg_l"].isna().sum())
-
-    # B. Invalid numeric values
     nonpositive_mic = int((df["mic_mg_l"] <= 0).sum())
     negative_count = int((df["isolate_count"] < 0).sum())
-
-    # C. Duplicate MIC bins
     duplicate_mic_bins = int(df["mic_mg_l"].duplicated().sum())
-
-    # D. Total displayed MIC-bin count
-    displayed_bin_total = int(df["isolate_count"].sum())
+    displayed_bin_total = int(df["isolate_count"].sum()) #mic bin count sum
 
     reported_observations = metadata["reported_observations"]
     observation_difference = None
@@ -152,7 +99,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
             observation_difference / reported_observations * 100
         )
 
-    # E. ECOFF consistency
+    #ecoff stuff
     unique_ecoffs = df["ecoff_mg_l"].dropna().unique()
 
     if len(unique_ecoffs) == 1:
@@ -182,7 +129,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
             )
         )
 
-    # F. Normalize the MIC-bin counts
+    #normalize for clarity
     if displayed_bin_total <= 0:
         raise ValueError(
             f"{csv_path.name}: total isolate_count must be greater than zero."
@@ -193,7 +140,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
     )
     normalized_frequency_sum = float(df["normalized_frequency"].sum())
 
-    # G. Add phenotype group labels
+    # adding phenotype group labels
     if np.isnan(ecoff):
         df["mic_group"] = "unknown_ecoff"
         low_mic_fraction = np.nan
@@ -243,7 +190,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
         "high_mic_fraction": high_mic_fraction,
     }
 
-    # Print summary
+    # printing summary
     print(f"Species: {summary['species']}")
     print(f"Antibiotic: {summary['antibiotic']}")
     print(f"Number of MIC categories: {summary['mic_category_count']}")
@@ -268,7 +215,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
         f"{summary['high_mic_fraction']:.4f}"
     )
 
-    # Collect warnings
+    # warning stuff
     warnings = []
 
     if missing_mic > 0:
@@ -306,10 +253,7 @@ def quality_check_mic_file(csv_path: Path) -> tuple[pd.DataFrame, dict]:
     return df, summary
 
 
-# ============================================================
-# 4. Run checks for all matching CSV files
-# ============================================================
-
+#final checks
 def main() -> None:
     csv_files = sorted(DATA_DIR.glob("*_ciprofloxacin_eucast_mic.csv"))
 
