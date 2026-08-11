@@ -1,56 +1,17 @@
-#!/usr/bin/env python3
-"""
-03_deterministic_population_model.py
-
-2.7. Deterministic MIC-Dependent Population Dynamics Model
-
-This script uses the simulated ciprofloxacin exposure trajectories generated in Step 2.6
-to simulate deterministic changes in low-MIC and high-MIC bacterial phenotypes.
-
-Required input file in the same folder:
-    simulated_ciprofloxacin_exposure_trajectories.csv
-
-Expected input columns:
-    time_h
-    regular
-    dispersed_troughs
-    clustered_troughs
-
-Outputs are saved to:
-    deterministic_model_output/
-
-Generated output files:
-    deterministic_population_timeseries.csv
-    deterministic_population_summary.csv
-    figure3_<species>_deterministic_high_mic_fraction.png
-    figure4_final_high_mic_fraction.png
-"""
-
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-# ============================================================
-# 1. File paths
-# ============================================================
-
+#paths for files
 DATA_DIR = Path(".")
 INPUT_FILE = DATA_DIR / "simulated_ciprofloxacin_exposure_trajectories.csv"
 
 OUTPUT_DIR = DATA_DIR / "deterministic_model_output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-
-# ============================================================
-# 2. Representative MIC phenotypes
-# ============================================================
-# These values come from the selected representative phenotypes in Table 3.
-# Low-MIC phenotype = modal MIC
-# High-MIC phenotype = first MIC category above the species-specific ECOFF
-
+#low mic phenotype is modal MIC, high mic phenotype is first MIC category on ECOFF
 REPRESENTATIVE_MIC = {
     "Escherichia coli": {
         "short_name": "E. coli",
@@ -69,13 +30,7 @@ REPRESENTATIVE_MIC = {
     },
 }
 
-
-# ============================================================
-# 3. Deterministic population model parameters
-# ============================================================
-# These are baseline simulation values.
-# They can later be varied in sensitivity analysis.
-
+#baseline values, may be subject to change
 INITIAL_TOTAL_POPULATION = 1e6       # cells
 INITIAL_HIGH_FRACTION = 1e-4         # initial high-MIC phenotype fraction
 CARRYING_CAPACITY = 1e9              # maximum population size, cells
@@ -88,20 +43,8 @@ HILL_COEFFICIENT = 2.0               # steepness of drug response curve
 HIGH_MIC_FITNESS_COST = 0.05         # 5% reduction in baseline growth rate
 MIN_POPULATION = 1e-12               # lower bound to avoid numerical underflow
 
-
-# ============================================================
-# 4. Helper functions
-# ============================================================
-
+#funcs
 def drug_effect(concentration: float, mic: float) -> float:
-    """
-    Calculate ciprofloxacin-induced drug effect using an Emax-type function.
-
-    exposure_ratio = C(t) / MIC
-
-    When concentration is much higher than MIC, drug effect approaches MAX_DRUG_EFFECT.
-    When concentration is much lower than MIC, drug effect is small.
-    """
     if mic <= 0:
         raise ValueError("MIC must be greater than zero.")
 
@@ -124,38 +67,19 @@ def update_population(
     high_mic: float,
     dt: float,
 ) -> tuple[float, float, dict]:
-    """
-    Update low-MIC and high-MIC phenotype populations over one time step.
-
-    Net growth rate:
-        net_growth = baseline growth under carrying capacity - drug effect
-
-    Low-MIC and high-MIC phenotypes experience different drug effects because
-    their MIC values are different.
-    """
 
     n_total = n_low + n_high
-
-    # Logistic growth limitation
     logistic_factor = max(0.0, 1.0 - (n_total / CARRYING_CAPACITY))
-
-    # Baseline growth terms
     growth_low = BASELINE_GROWTH_RATE * logistic_factor
     growth_high = BASELINE_GROWTH_RATE * (1.0 - HIGH_MIC_FITNESS_COST) * logistic_factor
 
-    # Ciprofloxacin effects
+    #effects
     effect_low = drug_effect(concentration, low_mic)
     effect_high = drug_effect(concentration, high_mic)
-
-    # Net growth rates
     net_low = growth_low - effect_low
     net_high = growth_high - effect_high
-
-    # Exponential update
     n_low_next = n_low * np.exp(net_low * dt)
     n_high_next = n_high * np.exp(net_high * dt)
-
-    # Avoid numerical zero
     n_low_next = max(n_low_next, MIN_POPULATION)
     n_high_next = max(n_high_next, MIN_POPULATION)
 
@@ -178,21 +102,16 @@ def simulate_one_condition(
     low_mic: float,
     high_mic: float,
 ) -> pd.DataFrame:
-    """
-    Run one deterministic simulation for one species and one exposure scenario.
-    """
 
     time_values = trajectory_df["time_h"].to_numpy()
     concentration_values = trajectory_df[scenario].to_numpy()
 
-    # Estimate dt from the time column
+    #estimate dt
     dt_values = np.diff(time_values)
     if len(dt_values) == 0:
         raise ValueError("The trajectory file must contain more than one time point.")
 
     dt = float(np.median(dt_values))
-
-    # Initial population
     n_high = INITIAL_TOTAL_POPULATION * INITIAL_HIGH_FRACTION
     n_low = INITIAL_TOTAL_POPULATION - n_high
 
@@ -203,8 +122,6 @@ def simulate_one_condition(
 
         n_total = n_low + n_high
         high_fraction = n_high / n_total if n_total > 0 else np.nan
-
-        # Calculate current diagnostics before updating
         effect_low = drug_effect(concentration, low_mic)
         effect_high = drug_effect(concentration, high_mic)
 
@@ -225,7 +142,7 @@ def simulate_one_condition(
             "drug_effect_high": effect_high,
         })
 
-        # Do not update after the final time point
+        #no update no no no no update
         if idx == len(time_values) - 1:
             break
 
@@ -239,11 +156,6 @@ def simulate_one_condition(
         )
 
     return pd.DataFrame(rows)
-
-
-# ============================================================
-# 5. Main analysis
-# ============================================================
 
 def main() -> None:
     if not INPUT_FILE.exists():
@@ -292,10 +204,7 @@ def main() -> None:
 
     timeseries_df = pd.concat(all_timeseries, ignore_index=True)
 
-    # ========================================================
-    # 6. Summary table
-    # ========================================================
-
+    #final summary
     summary_rows = []
 
     for (species, scenario), group in timeseries_df.groupby(["species", "scenario"]):
@@ -312,7 +221,6 @@ def main() -> None:
             group.loc[group["high_fraction"].idxmax(), "time_h"]
         )
 
-        # AUC of concentration trajectory
         auc_0_72 = float(
             np.trapz(group["concentration_mg_l"], group["time_h"])
         )
@@ -320,15 +228,13 @@ def main() -> None:
         low_mic = float(final_row["low_mic"])
         high_mic = float(final_row["high_mic"])
 
-        # Selective window:
-        # low-MIC phenotype is exposed above its MIC, while high-MIC phenotype
-        # remains below its MIC.
+        #window
         selective_window_mask = (
             (group["concentration_mg_l"] >= low_mic)
             & (group["concentration_mg_l"] < high_mic)
         )
 
-        # Estimate time spent in selective window
+        #time spent inbetween
         time_values = group["time_h"].to_numpy()
         if len(time_values) > 1:
             dt = float(np.median(np.diff(time_values)))
@@ -361,16 +267,12 @@ def main() -> None:
 
     summary_df = pd.DataFrame(summary_rows)
 
-    # Save outputs
+    #output save
     timeseries_path = OUTPUT_DIR / "deterministic_population_timeseries.csv"
     summary_path = OUTPUT_DIR / "deterministic_population_summary.csv"
 
     timeseries_df.to_csv(timeseries_path, index=False)
     summary_df.to_csv(summary_path, index=False)
-
-    # ========================================================
-    # 7. Figure 3: high-MIC fraction over time for each species
-    # ========================================================
 
     scenario_label_map = {
         "regular": "Regular exposure",
@@ -415,18 +317,13 @@ def main() -> None:
         plt.savefig(figure_path, dpi=300)
         plt.close()
 
-    # ========================================================
-    # 8. Figure 4: final high-MIC fraction by scenario
-    # ========================================================
-
-    # One compact bar chart for the final comparison
+    #bar chart
     plot_summary = summary_df.copy()
     plot_summary["species_short"] = plot_summary["species"].map(
         {s: info["short_name"] for s, info in REPRESENTATIVE_MIC.items()}
     )
     plot_summary["scenario_label"] = plot_summary["scenario"].map(scenario_label_map)
 
-    # Use a grouped position layout without assigning custom colors.
     species_list = [info["short_name"] for info in REPRESENTATIVE_MIC.values()]
     x = np.arange(len(species_list))
     width = 0.25
@@ -462,10 +359,7 @@ def main() -> None:
     plt.savefig(figure4_path, dpi=300)
     plt.close()
 
-    # ========================================================
-    # 9. Print summary
-    # ========================================================
-
+    #printing outputss
     print("\nDeterministic population model completed.")
     print(f"Timeseries saved to: {timeseries_path}")
     print(f"Summary saved to: {summary_path}")

@@ -1,85 +1,47 @@
-#!/usr/bin/env python3
-"""
-02_generate_exposure_trajectories.py
-
-Generate simulated ciprofloxacin exposure trajectories using a pulse-decay model.
-
-Outputs:
-    simulated_ciprofloxacin_exposure_trajectories.csv
-    simulated_ciprofloxacin_exposure_metrics.csv
-    figure2_simulated_ciprofloxacin_exposure_trajectories.png
-"""
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+#basic variables
+total_time = 72          # total simulation time/h
+dt = 0.1                 # time step/h
+half_life = 4            # concentration half-life/h
 
-# ============================================================
-# 1. Basic settings
-# ============================================================
-
-total_time = 72          # total simulation time, h
-dt = 0.1                 # time step, h
-half_life = 4            # concentration half-life, h
-
-full_dose = 4            # full-dose pulse, mg/L
-reduced_dose = 1         # reduced-dose pulse, mg/L
+full_dose = 4            # full-dose pulse/mg/L
+reduced_dose = 1         # reduced-dose pulse/mg/L
 
 dose_times = [0, 12, 24, 36, 48, 60]
 
-# Concentration decay constant
+#the concentration decay constant
 k = np.log(2) / half_life
 
-# Time array
+#timearr
 time_points = np.round(np.arange(0, total_time + dt, dt), 1)
 
-
-# ============================================================
-# 2. Exposure scenario definitions
-# ============================================================
-
+#exposure situations
 dose_patterns = {
     "regular": [4, 4, 4, 4, 4, 4],
     "dispersed_troughs": [4, 1, 4, 4, 1, 4],
     "clustered_troughs": [4, 4, 1, 1, 4, 4],
 }
 
-
-# ============================================================
-# 3. Pulse-decay model function
-# ============================================================
-
+#pulsedecay model functionnnn
 def generate_concentration_trajectory(dose_pattern):
-    """
-    Generate the 0-72 h ciprofloxacin concentration trajectory
-    according to the given dose pattern.
-    """
-
-    # Match dose times with dose values
     dose_dict = dict(zip(dose_times, dose_pattern))
-
     concentrations = []
     C = 0.0
-
     for t in time_points:
-        # Add dose pulse if the current time is a dosing time
+        #add if puse time
         if t in dose_dict:
             C += dose_dict[t]
-
-        # Save current concentration
+        #save in concentrations
         concentrations.append(C)
-
-        # Apply exponential decay before the next time step
+        #next time step
         C = C * np.exp(-k * dt)
 
     return np.array(concentrations)
 
-
-# ============================================================
-# 4. Generate concentration trajectories for all scenarios
-# ============================================================
-
+#all scenario bruteforcing
 trajectory_data = pd.DataFrame({
     "time_h": time_points
 })
@@ -87,11 +49,7 @@ trajectory_data = pd.DataFrame({
 for scenario, pattern in dose_patterns.items():
     trajectory_data[scenario] = generate_concentration_trajectory(pattern)
 
-
-# ============================================================
-# 5. Calculate exposure metrics
-# ============================================================
-
+#final results
 auc_results = []
 
 for scenario in dose_patterns.keys():
@@ -107,12 +65,8 @@ for scenario in dose_patterns.keys():
         "min_concentration": trajectory_data[scenario].min(),
     })
 
+#output everything to readable format
 auc_df = pd.DataFrame(auc_results)
-
-
-# ============================================================
-# 6. Save CSV files
-# ============================================================
 
 trajectory_data.to_csv(
     "simulated_ciprofloxacin_exposure_trajectories.csv",
@@ -124,11 +78,7 @@ auc_df.to_csv(
     index=False
 )
 
-
-# ============================================================
-# 7. Draw and save Figure 2
-# ============================================================
-
+#pyplot
 plt.figure(figsize=(10, 6))
 
 plt.plot(
@@ -163,11 +113,7 @@ plt.savefig(
 
 plt.show()
 
-
-# ============================================================
-# 8. Print results
-# ============================================================
-
+#defbug
 print("Exposure trajectories saved.")
 print("Exposure metrics saved.")
 print()

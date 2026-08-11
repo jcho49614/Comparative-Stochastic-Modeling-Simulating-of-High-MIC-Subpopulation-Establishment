@@ -1,47 +1,3 @@
-#!/usr/bin/env python3
-"""
-04_deterministic_parameter_screening.py
-
-Purpose
--------
-This script performs deterministic parameter screening for the AMR simulation project.
-
-It repeatedly generates simulated ciprofloxacin exposure trajectories and runs the
-deterministic MIC-dependent population model under many parameter combinations.
-The goal is to find a biologically interpretable baseline parameter set before
-moving to stochastic simulations.
-
-This is NOT machine-learning training.
-It is deterministic parameter screening / baseline parameter selection.
-
-Required input files
---------------------
-None.
-
-This script is standalone. It contains:
-    - representative MIC phenotypes from Table 3
-    - exposure trajectory generation rules
-    - deterministic population model
-    - biological plausibility criteria
-    - parameter grid for screening
-
-Outputs
--------
-All outputs are saved to:
-
-    parameter_screening_output/
-
-Main output files:
-    parameter_screening_all_results.csv
-    parameter_screening_candidate_results.csv
-    best_parameter_set.csv
-    best_exposure_trajectories.csv
-    best_deterministic_population_timeseries.csv
-    best_deterministic_population_summary.csv
-    figure_best_<species>_high_mic_fraction.png
-    figure_best_final_high_mic_fraction.png
-"""
-
 from pathlib import Path
 import json
 
@@ -49,18 +5,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-# ============================================================
-# 1. Output folder
-# ============================================================
-
 OUTPUT_DIR = Path("parameter_screening_output")
 OUTPUT_DIR.mkdir(exist_ok=True)
-
-
-# ============================================================
-# 2. Representative MIC phenotypes from Table 3
-# ============================================================
 
 REPRESENTATIVE_MIC = {
     "Escherichia coli": {
@@ -83,11 +29,6 @@ REPRESENTATIVE_MIC = {
     },
 }
 
-
-# ============================================================
-# 3. Fixed simulation settings
-# ============================================================
-
 TOTAL_TIME = 72.0               # h
 DT = 0.1                        # h
 DOSE_INTERVAL = 12.0            # h
@@ -101,16 +42,8 @@ CARRYING_CAPACITY = 1e9         # cells
 
 HIGH_MIC_FITNESS_COST = 0.05    # 5% reduction in high-MIC baseline growth
 
-# Numerical lower bound. This is not used as a biological population.
-# Results below EXTINCTION_THRESHOLD are marked as extinct / not interpretable.
+#lower bound, lower than this considered extinct.
 NUMERICAL_FLOOR = 1e-300
-
-
-# ============================================================
-# 4. Biological plausibility criteria
-# ============================================================
-# These criteria are used to avoid parameter sets where all populations collapse
-# or where high-MIC fractions are numerical artifacts.
 
 EXTINCTION_THRESHOLD = 1e3       # cells; final population below this is considered extinct
 SATURATION_THRESHOLD = 0.98      # final population above 98% of K is considered saturated
@@ -121,12 +54,7 @@ MAX_FINAL_HIGH_FRACTION_FOR_SIGNAL = 0.95
 MIN_HIGH_FRACTION_RANGE = 0.01   # at least some visible scenario/species variation
 MIN_CLUSTERED_MINUS_DISPERSED = 0.005
 
-
-# ============================================================
-# 5. Parameter grid for screening
-# ============================================================
-# The grid is deliberately moderate. You can expand it later if needed.
-
+#maybe expand if time?
 PARAMETER_GRID = {
     "full_dose": [0.5, 1.0, 2.0, 4.0],
     "reduced_dose_fraction": [0.25, 0.5],
@@ -137,29 +65,11 @@ PARAMETER_GRID = {
     "hill_coefficient": [1.0, 2.0],
 }
 
-
-# ============================================================
-# 6. Exposure trajectory generation
-# ============================================================
-
 def generate_time_points() -> np.ndarray:
-    """Generate time points from 0 to TOTAL_TIME."""
     return np.round(np.arange(0, TOTAL_TIME + DT, DT), 6)
 
 
 def build_dose_patterns(full_dose: float, reduced_dose: float) -> dict:
-    """
-    Build regular, dispersed, and clustered dose patterns.
-
-    Regular:
-        full, full, full, full, full, full
-
-    Dispersed troughs:
-        full, reduced, full, full, reduced, full
-
-    Clustered troughs:
-        full, full, reduced, reduced, full, full
-    """
     return {
         "regular": [
             full_dose,
@@ -192,9 +102,6 @@ def generate_concentration_trajectory(
     dose_pattern: list,
     half_life: float,
 ) -> np.ndarray:
-    """
-    Generate one pulse-decay concentration trajectory.
-    """
     time_points = generate_time_points()
     dose_dict = dict(zip(DOSE_TIMES, dose_pattern))
     decay_constant = np.log(2) / half_life
@@ -203,13 +110,13 @@ def generate_concentration_trajectory(
     concentration = 0.0
 
     for t in time_points:
-        # Because time points are rounded, direct matching is safe here.
+        #direct matching here
         if float(t) in dose_dict:
             concentration += dose_dict[float(t)]
 
         concentrations.append(concentration)
 
-        # Decay before next time step
+        #decay before next step
         concentration = concentration * np.exp(-decay_constant * DT)
 
     return np.array(concentrations)
@@ -220,9 +127,6 @@ def generate_exposure_trajectories(
     reduced_dose_fraction: float,
     half_life: float,
 ) -> pd.DataFrame:
-    """
-    Generate regular/dispersed/clustered exposure trajectories.
-    """
     reduced_dose = full_dose * reduced_dose_fraction
     dose_patterns = build_dose_patterns(full_dose, reduced_dose)
 
@@ -238,11 +142,7 @@ def generate_exposure_trajectories(
 
     return trajectory_df
 
-
-# ============================================================
-# 7. Deterministic population model
-# ============================================================
-
+#deterministic model
 def drug_effect(
     concentration: float,
     mic: float,
@@ -250,9 +150,7 @@ def drug_effect(
     ec50_ratio: float,
     hill_coefficient: float,
 ) -> float:
-    """
-    Emax-type drug effect as a function of exposure ratio C(t)/MIC.
-    """
+    #Emax-type drug effect as a function of exposure ratio C(t)/MIC.
     if mic <= 0:
         raise ValueError("MIC must be greater than zero.")
 
@@ -277,10 +175,8 @@ def simulate_one_condition(
     ec50_ratio: float,
     hill_coefficient: float,
 ) -> pd.DataFrame:
-    """
-    Simulate deterministic low-MIC and high-MIC phenotype dynamics for one
-    species under one exposure scenario.
-    """
+    
+    #low, high MIC values for one species.
     time_values = trajectory_df["time_h"].to_numpy()
     concentration_values = trajectory_df[scenario].to_numpy()
 
@@ -335,7 +231,7 @@ def simulate_one_condition(
         if idx == len(time_values) - 1:
             break
 
-        # Logistic growth limitation
+        # limitation
         logistic_factor = max(0.0, 1.0 - (n_total / CARRYING_CAPACITY))
 
         growth_low = baseline_growth_rate * logistic_factor
@@ -351,7 +247,7 @@ def simulate_one_condition(
         n_low = n_low * np.exp(net_growth_low * dt)
         n_high = n_high * np.exp(net_growth_high * dt)
 
-        # Numerical floor only to prevent underflow.
+        #a floor
         n_low = max(n_low, NUMERICAL_FLOOR)
         n_high = max(n_high, NUMERICAL_FLOOR)
 
@@ -362,9 +258,7 @@ def simulate_all_conditions(
     trajectory_df: pd.DataFrame,
     params: dict,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Run all 3 species x 3 exposure scenarios for a parameter set.
-    """
+   #run all 3 species
     all_ts = []
 
     for species, mic_info in REPRESENTATIVE_MIC.items():
@@ -389,9 +283,7 @@ def simulate_all_conditions(
 
 
 def summarize_timeseries(timeseries_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Summarize deterministic time-series outputs at the final time point.
-    """
+    #summarize deterministic outputs
     rows = []
 
     for (species, scenario), group in timeseries_df.groupby(["species", "scenario"]):
@@ -445,22 +337,9 @@ def summarize_timeseries(timeseries_df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.DataFrame(rows)
 
-
-# ============================================================
-# 8. Biological plausibility scoring
-# ============================================================
-
 def evaluate_parameter_set(summary_df: pd.DataFrame) -> dict:
-    """
-    Evaluate whether a parameter set gives biologically interpretable outputs.
 
-    Good deterministic baseline outputs should:
-        1. avoid complete population collapse,
-        2. avoid numerical high-fraction artifacts,
-        3. show some variation across exposure scenarios,
-        4. allow comparison of dispersed vs clustered troughs.
-    """
-
+    #evaluate the parapmeters
     final_totals = summary_df["final_total_population"].to_numpy()
     final_high = summary_df["final_high_fraction"].to_numpy()
 
