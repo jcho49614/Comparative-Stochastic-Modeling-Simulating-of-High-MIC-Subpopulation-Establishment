@@ -359,7 +359,7 @@ def evaluate_parameter_set(summary_df: pd.DataFrame) -> dict:
 
     high_fraction_range = float(np.nanmax(final_high) - np.nanmin(final_high))
 
-    # Clustered vs dispersed comparison by species
+    # clustered/dispersed comparison by species
     clustered_positive_count = 0
     clustered_minus_dispersed_values = []
 
@@ -391,17 +391,14 @@ def evaluate_parameter_set(summary_df: pd.DataFrame) -> dict:
     has_visible_variation = high_fraction_range >= MIN_HIGH_FRACTION_RANGE
     has_some_usable_signal = usable_signal_count >= 3
 
-    # Candidate rule:
-    # This does not require the hypothesis to be true for all species.
-    # It only identifies conditions that are biologically interpretable enough
-    # for the next simulation stage.
+   
     is_candidate = (
         no_extinction
         and has_visible_variation
         and has_some_usable_signal
     )
 
-    # Ranking score
+    # score for usable candidate
     score = 0.0
 
     if no_extinction:
@@ -415,7 +412,6 @@ def evaluate_parameter_set(summary_df: pd.DataFrame) -> dict:
     score += 200.0 * max(0.0, min(mean_clustered_minus_dispersed / 0.10, 1.0))
     score -= 25.0 * saturation_count
 
-    # Penalize cases where all final high fractions are almost identical.
     if high_fraction_range < MIN_HIGH_FRACTION_RANGE:
         score -= 200.0
 
@@ -430,11 +426,6 @@ def evaluate_parameter_set(summary_df: pd.DataFrame) -> dict:
         "mean_clustered_minus_dispersed": mean_clustered_minus_dispersed,
         "max_clustered_minus_dispersed": max_clustered_minus_dispersed,
     }
-
-
-# ============================================================
-# 9. Screening loop
-# ============================================================
 
 def parameter_combinations() -> list:
     """Generate all parameter combinations from PARAMETER_GRID."""
@@ -504,13 +495,11 @@ def run_screening() -> pd.DataFrame:
     return results_df
 
 
-# ============================================================
-# 10. Save best parameter outputs
-# ============================================================
+#save the best output function
 
 def save_best_parameter_outputs(best_params: dict) -> None:
     """
-    Re-run the deterministic model for the selected best parameter set and
+    re-running the deterministic model for the selected best parameter set and
     save trajectories, population outputs, summary tables, and figures.
     """
     trajectory_df = generate_exposure_trajectories(
@@ -524,7 +513,7 @@ def save_best_parameter_outputs(best_params: dict) -> None:
         params=best_params,
     )
 
-    # Save data files
+    #output stuff
     trajectory_path = OUTPUT_DIR / "best_exposure_trajectories.csv"
     timeseries_path = OUTPUT_DIR / "best_deterministic_population_timeseries.csv"
     summary_path = OUTPUT_DIR / "best_deterministic_population_summary.csv"
@@ -539,7 +528,7 @@ def save_best_parameter_outputs(best_params: dict) -> None:
     with best_params_json_path.open("w", encoding="utf-8") as f:
         json.dump(best_params, f, indent=4)
 
-    # Figure: high-MIC fraction over time for each species
+    # each species high mic map
     scenario_label_map = {
         "regular": "Regular exposure",
         "dispersed_troughs": "Dispersed troughs",
@@ -574,7 +563,7 @@ def save_best_parameter_outputs(best_params: dict) -> None:
         plt.savefig(fig_path, dpi=300)
         plt.close()
 
-    # Figure: final high-MIC fraction bar chart
+   #figure with barchart for easy visualization
     plot_summary = summary_df.copy()
     plot_summary["species_short"] = plot_summary["species"].map(
         {s: info["short_name"] for s, info in REPRESENTATIVE_MIC.items()}
@@ -626,10 +615,7 @@ def save_best_parameter_outputs(best_params: dict) -> None:
     print(f"  Figures saved in: {OUTPUT_DIR}")
 
 
-# ============================================================
-# 11. Main
-# ============================================================
-
+#main func
 def main() -> None:
     results_df = run_screening()
 
@@ -653,7 +639,7 @@ def main() -> None:
         print(f"\nNumber of candidate parameter sets: {len(candidates_df)}")
         best_row = candidates_df.iloc[0].to_dict()
 
-    # Keep only actual model parameters needed for re-running the best simulation
+    #just the essentials
     best_params = {
         "full_dose": float(best_row["full_dose"]),
         "reduced_dose_fraction": float(best_row["reduced_dose_fraction"]),
